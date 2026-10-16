@@ -1,0 +1,116 @@
+rules_version = '2';
+
+// Lemonly Retreat Poll — Firestore security rules.
+// Deploy: Firebase console → Firestore Database → Rules → paste this file → Publish.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Who's who ----------
+
+    function email() {
+      return request.auth.token.email.lower();
+    }
+
+    // Signed in with a verified @lemonly.com or @clickrain.com Google account.
+    function isMember() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && email().matches('^[^@]+@(lemonly|clickrain)[.]com$');
+    }
+
+    function isAdmin() {
+      return isMember() && email() in ['chris@clickrain.com', 'nick@lemonly.com'];
+    }
+
+    function isSelf(uid) {
+      return isMember() && request.auth.uid == uid;
+    }
+
+    function config() {
+      return get(/databases/$(database)/documents/config/app).data;
+    }
+
+    // ---------- Round 1 validation ----------
+
+    function categoryIds() {
+      return ['cat1', 'cat2', 'cat3', 'cat4', 'cat5', 'cat6', 'cat7', 'cat8', 'cat9', 'cat10'];
+    }
+
+    function validCount(v, k) {
+      return !(k in v) || (v[k] is int && v[k] >= 0 && v[k] <= 100);
+    }
+
+    function n(v, k) {
+      return v.get(k, 0);
+    }
+
+    function validRound1(d) {
+      let v = d.votes;
+      return d.keys().hasOnly(['votes', 'updatedAt'])
+        && d.updatedAt == request.time
+        && v is map
+        && v.keys().hasOnly(categoryIds())
+        && validCount(v, 'cat1') && validCount(v, 'cat2') && validCount(v, 'cat3')
+        && validCount(v, 'cat4') && validCount(v, 'cat5') && validCount(v, 'cat6')
+        && validCount(v, 'cat7') && validCount(v, 'cat8') && validCount(v, 'cat9')
+        && validCount(v, 'cat10')
+        && n(v, 'cat1') + n(v, 'cat2') + n(v, 'cat3') + n(v, 'cat4') + n(v, 'cat5')
+           + n(v, 'cat6') + n(v, 'cat7') + n(v, 'cat8') + n(v, 'cat9') + n(v, 'cat10') <= 100;
+    }
+
+    // ---------- Round 2 validation ----------
+
+    function validBadge(b, k, cats) {
+      return !(k in b) || b[k] == null || b[k] in cats;
+    }
+
+    function validRound2(d, cfg) {
+      let b = d.badges;
+      return d.keys().hasOnly(['badges', 'updatedAt'])
+        && d.updatedAt == request.time
+        && b is map
+        && b.keys().hasOnly(['badgeA', 'badgeB', 'badgeC', 'badgeD'])
+        && validBadge(b, 'badgeA', cfg.round2Categories)
+        && validBadge(b, 'badgeB', cfg.round2Categories)
+        && validBadge(b, 'badgeC', cfg.round2Categories)
+        && validBadge(b, 'badgeD', cfg.round2Categories);
+    }
+
+    // ---------- Collections ----------
+
+    match /config/{docId} {
+      allow read: if isMember();
+      allow write: if isAdmin() && docId == 'app';
+    }
+
+    match /users/{uid} {
+      allow read: if isMember();
+      allow create, update: if isSelf(uid)
+        && request.resource.data.keys().hasOnly(['name', 'email', 'photoURL', 'lastSeen'])
+        && request.resource.data.email == email()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 200
+        && (request.resource.data.photoURL == null || request.resource.data.photoURL is string)
+        && request.resource.data.lastSeen == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /round1Votes/{uid} {
+      allow read: if isMember();
+      allow create, update: if isSelf(uid)
+        && config().round1Locked == false
+        && validRound1(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /round2Votes/{uid} {
+      allow read: if isMember();
+      allow create, update: if isSelf(uid)
+        && config().round2Open == true
+        && config().round2Locked == false
+        && validRound2(request.resource.data, config());
+      allow delete: if isAdmin();
+    }
+  }
+}

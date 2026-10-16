@@ -1,0 +1,23 @@
+# Local-only docs and planning notes (repo is public)
+README.md
+spec.md
+spec-*.md
+notes*.md
+*-notes.md
+TODO.md
+demo-guide.md
+
+# Claude Code
+CLAUDE.md
+.claude/
+
+# OS / editor clutter
+.DS_Store
+.vscode/
+*.log
+
+# Local/test data exports
+*.csv
+
+# Local demo mode (fake people + localStorage backend) — open the app with ?demo locally
+js/backend-demo.js
