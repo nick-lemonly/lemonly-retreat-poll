@@ -141,7 +141,8 @@ export function createResultsView(ctx) {
   }
 
   // One avatar size for every tile, so columns line up and nothing looks bigger by accident.
-  const AV_GAP = 8;
+  const AV_GAP = 8; // row gap
+  const AV_COL_GAP = 11; // matches .r1-tile .av-grid column-gap
   const AV_MAX = 44;
   const AV_MIN = 20;
   const fillsScreen = window.matchMedia('(min-width: 1100px) and (min-height: 600px)');
@@ -156,7 +157,7 @@ export function createResultsView(ctx) {
   /** Largest size that fits `n` avatars into a w×h box. */
   function fitSize(n, w, h) {
     for (let s = AV_MAX; s > AV_MIN; s--) {
-      const cols = Math.max(1, Math.floor((w + AV_GAP) / (s + AV_GAP)));
+      const cols = Math.max(1, Math.floor((w + AV_COL_GAP) / (s + AV_COL_GAP)));
       if (Math.ceil(n / cols) * (s + AV_GAP) - AV_GAP <= h) return s;
     }
     return AV_MIN;

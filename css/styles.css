@@ -1410,6 +1410,7 @@ body.is-dragging .tray {
 
 .r1-tile .av-grid {
   align-content: flex-end;
+  column-gap: 11px; /* room for the vote-count badges */
 }
 
 .av-btn {
@@ -1593,13 +1594,18 @@ body.is-dragging .tray {
   background: color-mix(in srgb, var(--badge) 22%, white);
 }
 
+.r2-col__head {
+  flex-wrap: wrap;
+}
+
 .r2-col__chip {
+  flex: 1 1 9rem;
   min-width: 0;
 }
 
 .r2-col__chip .badge-chip {
   font-size: 1.05rem;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.65rem;
 }
 
@@ -1615,11 +1621,11 @@ body.is-dragging .tray {
 .r2-col__chip .badge-chip__label {
   white-space: normal;
   line-height: 1.25;
-  padding-top: 0.2rem;
 }
 
 .r2-col__meta {
   flex: none;
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1665,7 +1671,7 @@ body.is-dragging .tray {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem; /* same as the padding, so rows are evenly spaced on all sides */
   padding: 0.75rem;
 }
 
@@ -1725,7 +1731,7 @@ body.is-dragging .tray {
 }
 
 .r2-grid.is-dense .r2-rows {
-  gap: 0.35rem;
+  gap: 0.5rem;
   padding: 0.5rem;
 }
 
@@ -2313,6 +2319,15 @@ body.is-dragging .tray {
 
   .results {
     flex: 1;
+  }
+
+  /* Round 1 is exactly one screen tall, so avatars shrink to fit instead of pushing tiles down. */
+  body[data-route='results'] .view:has(.results[data-round='1']) {
+    height: calc(100dvh - var(--header-h) - var(--tabs-h));
+  }
+
+  .results[data-round='1'] {
+    min-height: 0;
   }
 
   .r1-grid {

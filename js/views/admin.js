@@ -140,12 +140,8 @@ export function createAdminView(ctx) {
   );
   const iconPickers = Object.fromEntries(
     BADGE_IDS.map((id) => {
-      const mark = (icon) =>
-        h(
-          'span.badge-chip__letter',
-          { style: { '--badge': badgeColor({ badgeColors: { [id]: badgeColorPickers[id].value } }, id) } },
-          badgeMark(id, { badgeIcons: { [id]: icon } })
-        );
+      // Color comes from --badge on the picker, so the trigger and every option follow the color picker.
+      const mark = (icon) => h('span.badge-chip__letter', badgeMark(id, { badgeIcons: { [id]: icon } }));
       return [
         id,
         createPicker({
@@ -159,8 +155,10 @@ export function createAdminView(ctx) {
       ];
     })
   );
-  // Keep the glyph preview in the badge's chosen color.
-  for (const id of BADGE_IDS) badgeColorPickers[id].el.addEventListener('input', () => (iconPickers[id].value = iconPickers[id].value));
+  // Keep the glyph picker (button and dropdown) in the badge's chosen color.
+  const syncGlyphColor = (id) =>
+    iconPickers[id].el.style.setProperty('--badge', badgeColor({ badgeColors: { [id]: badgeColorPickers[id].value } }, id));
+  for (const id of BADGE_IDS) badgeColorPickers[id].el.addEventListener('input', () => syncGlyphColor(id));
 
   let labelsDirty = false;
   const trim = (inputs) => Object.fromEntries(Object.entries(inputs).map(([id, input]) => [id, input.value.trim()]));
@@ -233,6 +231,7 @@ export function createAdminView(ctx) {
       badgeInputs[id].value = c.badgeLabels[id];
       badgeColorPickers[id].value = c.badgeColors?.[id] ?? d.badgeColors[id];
       iconPickers[id].value = c.badgeIcons?.[id] ?? 'letter';
+      syncGlyphColor(id);
     }
   }
 
